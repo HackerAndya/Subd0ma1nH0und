@@ -18,7 +18,7 @@ SubdomainHound is a powerful tool designed to hunt and discover subdomains assoc
 ```
 git clone https://github.com/HackerAndya/Subd0ma1nH0und.git
 cd Subd0ma1nH0und
-python subdomain_hound.py
+python Subd0ma1nH0und.py
 ```
 
 ## Usage
