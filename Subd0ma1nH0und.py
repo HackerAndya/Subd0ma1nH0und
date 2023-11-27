@@ -1,4 +1,4 @@
-#Output file
+import sys
 import requests
 import argparse
 import time
@@ -35,14 +35,18 @@ def process_query(query, output_file=None):
 
 def main():
     parser = argparse.ArgumentParser(description='Search queries on crt.sh concurrently.')
-    parser.add_argument('-t', '--threads', type=int, default=1, help='Number of threads for concurrent processing')
-    parser.add_argument('-d', '--delay', type=float, default=1.0, help='Delay between requests in seconds')
-    parser.add_argument('-o', '--output', help='Output file path')
-    parser.add_argument('input_file_path', help='Path to the file containing queries')
+    parser.add_argument('-t', '--threads', type=int, default=1, help='Number of threads for concurrent processing.')
+    parser.add_argument('-d', '--delay', type=float, default=1.0, help='Delay between requests in seconds.')
+    parser.add_argument('-o', '--output', help='Output file path.')
+    parser.add_argument('input_file_path', nargs='?', default=None, help='Path to the file containing Organization names.')
     args = parser.parse_args()
 
-    with open(args.file_path, 'r') as file:
-        queries = file.readlines()
+    if args.input_file_path:
+        with open(args.input_file_path, 'r') as file:
+            queries = file.readlines()
+    else:
+        # Read from stdin
+        queries = sys.stdin.readlines()
 
     with ThreadPoolExecutor(max_workers=args.threads) as executor:
         for query in map(str.strip, queries):
