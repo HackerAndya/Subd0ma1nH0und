@@ -10,20 +10,31 @@ SubdomainHound is a powerful tool designed to hunt and discover subdomains assoc
 - **Delay Between Requests:** Introduces a customizable delay between requests to avoid rate-limiting issues.
 - **Output to File:** Optionally saves the results to a specified output file for further analysis.
 
+## Requirements
+```pip install requests```
+
 ## Installation
 
 ```
-
+git clone https://github.com/HackerAndya/Subd0ma1nH0und.git
+cd Subd0ma1nH0und
+python subdomain_hound.py
 ```
 
 ## Usage
 
 ```bash
-python subdomain_hound.py
-python subdomain_hound.py -t <num_threads> -d <delay_seconds> -o <output_file> <input_file>
+python Subd0ma1nH0und.py
+python Subd0ma1nH0und.py -t <num_threads> -d <delay_seconds> -o <output_file> <input_file_path>
 ```
----
-| Options              | Description | Defaults |
+
+**Note:** Create a file containing Organization name then run the tool
+```
+e.g. echo "Tesla Inc" > inputFile.txt
+python Subd0ma1nH0und.py inputFile.txt
+```
+## Options
+| Flags              | Description | Defaults |
 | :---------------- | :------ | :----: |
 |`-t, --threads  ` |Number of threads for concurrent processing   | 1 |
 |` -d, --delay `  |   Delay between requests in seconds	   | 1.0 |
