@@ -26,13 +26,10 @@ python subdomain_hound.py
 ```bash
 python Subd0ma1nH0und.py
 python Subd0ma1nH0und.py -t <num_threads> -d <delay_seconds> -o <output_file> <input_file_path>
+echo "Org Name" | python Subd0ma1nH0und.py
+cat inputFile | python Subd0ma1nH0und.py
 ```
 
-**Note:** Create a file containing Organization name then run the tool
-```
-e.g. echo "Tesla Inc" > inputFile.txt
-python Subd0ma1nH0und.py inputFile.txt
-```
 ## Options
 | Flags              | Description | Defaults |
 | :---------------- | :------ | :----: |
