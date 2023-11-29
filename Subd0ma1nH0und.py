@@ -82,7 +82,9 @@ def main():
 
     with ThreadPoolExecutor(max_workers=args.threads) as executor:
         for query in map(str.strip, queries):
-            executor.submit(process_query, query, args.output)
+            # Store the result of search_query_on_crtsh in a variable named result
+            result = search_query_on_crtsh(query)
+            executor.submit(process_query, query, args.output, result)
             time.sleep(args.delay)  # Introduce a delay between requests
 
 if __name__ == "__main__":
