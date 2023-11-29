@@ -11,7 +11,9 @@ SubdomainHound is a powerful tool designed to hunt and discover subdomains assoc
 - **Output to File:** Optionally saves the results to a specified output file for further analysis.
 
 ## Requirements
-```pip install requests```
+```
+Python 3.X
+pip install requests```
 
 ## Installation
 
