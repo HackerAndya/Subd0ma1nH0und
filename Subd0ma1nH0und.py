@@ -9,24 +9,28 @@ import json
 
 def search_query_on_crtsh(query):
     url = f'https://crt.sh/?q={query}&output=json'
-    response = requests.get(url)
+    result = None  # Initialize result to None
+    try:
+        response = requests.get(url)
 
-    # Check if the response is successful (HTTP status code 200)
-    if response.status_code == 200:
-        try:
-            # Try to parse the response as JSON
-            result = response.json()
-            return result
-        except json.JSONDecodeError as e:
-            # Handle JSON decoding errors
-            print(f"Error decoding JSON for query '{query}': {e}")
-    else:
-        # Handle non-successful HTTP status codes
-        print(f"HTTP request failed for query '{query}' with status code {response.status_code}")
+        # Check if the response is successful (HTTP status code 200)
+        if response.status_code == 200:
+            try:
+                # Try to parse the response as JSON
+                result = response.json()
+            except json.JSONDecodeError as e:
+                # Handle JSON decoding errors
+                print(f"Error decoding JSON for query '{query}': {e}")
+        else:
+            # Handle non-successful HTTP status codes
+            print(f"HTTP request failed for query '{query}' with status code {response.status_code}")
 
-    # Return None in case of errors
-    return None
+    except requests.RequestException as e:
+        # Handle other request-related exceptions
+        print(f"Error making request for query '{query}': {e}")
 
+    return result
+    
 def get_common_names(result):
     return [entry.get('common_name', '') for entry in result]
 
