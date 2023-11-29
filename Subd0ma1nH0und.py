@@ -34,7 +34,7 @@ def search_query_on_crtsh(query):
 def get_common_names(result):
     return [entry.get('common_name', '') for entry in result]
 
-def process_query(query, output_file==None, result=None):
+def process_query(query, output_file=None, result=None):
     try:
         # Check if the result is empty or doesn't contain the expected data
         if not result or not isinstance(result, list):
