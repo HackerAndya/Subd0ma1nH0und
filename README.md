@@ -13,7 +13,8 @@ SubdomainHound is a powerful tool designed to hunt and discover subdomains assoc
 ## Requirements
 ```
 Python 3.X
-pip install requests```
+pip install requests
+```
 
 ## Installation
 
