@@ -26,17 +26,33 @@ python Subd0ma1nH0und.py
 
 ## Usage
 
+Run the script without any arguments:
 ```bash
 python Subd0ma1nH0und.py
+```
+Specify threads, delay, output file, and input file path:
+```
 python Subd0ma1nH0und.py -t <num_threads> -d <delay_seconds> -o <output_file> <input_file_path>
+```
+Pipe an organization name to the script:
+```
 echo "Org Name" | python Subd0ma1nH0und.py
+```
+Pipe a list of organization names from a file to the script:
+```
 cat inputFile | python Subd0ma1nH0und.py
 ```
 
 ## Options
 | Flags              | Description | Defaults |
 | :---------------- | :------ | :----: |
+|`-h, --help  ` |Show help menu   | - |
 |`-t, --threads  ` |Number of threads for concurrent processing   | 1 |
-|` -d, --delay `  |   Delay between requests in seconds	   | 1.0 |
+|` -d, --delay `  |   Delay between requests in seconds	   | 1.5 |
 |` -o, --output`  |  Output file path (optional)	   | - |
 | `<input_file>` |  Path to the file containing organization names| - |
+
+
+
+## Upcoming
+- Integration of whoisxmlapi
