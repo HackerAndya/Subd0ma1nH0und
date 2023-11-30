@@ -65,7 +65,7 @@ def process_query(query, output_file=None, result=None):
 def main():
     parser = argparse.ArgumentParser(description='Search queries on crt.sh concurrently.')
     parser.add_argument('-t', '--threads', type=int, default=1, help='Number of threads for concurrent processing.')
-    parser.add_argument('-d', '--delay', type=float, default=1.0, help='Delay between requests in seconds.')
+    parser.add_argument('-d', '--delay', type=float, default=1.5, help='Delay between requests in seconds.')
     parser.add_argument('-o', '--output', help='Output file path.')
     parser.add_argument('input_file_path', nargs='?', default=None, help='Path to the file containing Organization names.')
     args = parser.parse_args()
