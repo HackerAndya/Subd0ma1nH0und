@@ -50,6 +50,7 @@ cat inputFile | python Subd0ma1nH0und.py
 |`-t, --threads  ` |Number of threads for concurrent processing   | 1 |
 |` -d, --delay `  |   Delay between requests in seconds	   | 1.5 |
 |` -o, --output`  |  Output file path (optional)	   | - |
+|`-u, ----user-agent`|Custom User-Agent string.|Mozilla/5.0 (Linux; Android 6.0; Nexus 5 Build/MRA58N) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/119.0.0.0 Mobile Safari/537.36|
 | `<input_file>` |  Path to the file containing organization names| - |
 
 
