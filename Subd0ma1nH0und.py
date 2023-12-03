@@ -7,11 +7,11 @@ import time
 from concurrent.futures import ThreadPoolExecutor
 import json
 
-def search_query_on_crtsh(query):
+def search_query_on_crtsh(query, headers):
     url = f'https://crt.sh/?q={query}&output=json'
     result = None  # Initialize result to None
     try:
-        response = requests.get(url)
+        response = requests.get(url, headers=headers)
 
         # Check if the response is successful (HTTP status code 200)
         if response.status_code == 200:
@@ -38,18 +38,13 @@ def process_query(query, output_file=None, result=None):
     try:
         # Check if the result is empty or doesn't contain the expected data
         if not result or not isinstance(result, list):
-            print(f"No valid data for query '{query}'")
-            print("\n" + "="*50 + "\n")
             return
 
         common_names = get_common_names(result)
-        print(f"Common names for query '{query}':")
-
+        
         # Print each common name on a separate line
         for common_name in common_names:
             print(common_name)
-
-        print("\n" + "="*50 + "\n")
 
         # Write to the output file if specified
         if output_file:
@@ -67,6 +62,7 @@ def main():
     parser.add_argument('-t', '--threads', type=int, default=1, help='Number of threads for concurrent processing.')
     parser.add_argument('-d', '--delay', type=float, default=1.5, help='Delay between requests in seconds.')
     parser.add_argument('-o', '--output', help='Output file path.')
+    parser.add_argument('-u', '--user-agent', default='Mozilla/5.0 (Linux; Android 6.0; Nexus 5 Build/MRA58N) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/119.0.0.0 Mobile Safari/537.36', help='Custom User-Agent string.')
     parser.add_argument('input_file_path', nargs='?', default=None, help='Path to the file containing Organization names.')
     args = parser.parse_args()
 
@@ -79,11 +75,14 @@ def main():
     else:
         parser.print_help()
         sys.exit()
-
+    
+    # Prepare headers dictionary with the custom User-Agent
+    headers = {'User-Agent': args.user_agent}
+    
     with ThreadPoolExecutor(max_workers=args.threads) as executor:
         for query in map(str.strip, queries):
             # Store the result of search_query_on_crtsh in a variable named result
-            result = search_query_on_crtsh(query)
+            result = search_query_on_crtsh(query, headers)
             executor.submit(process_query, query, args.output, result)
             time.sleep(args.delay)  # Introduce a delay between requests
 
