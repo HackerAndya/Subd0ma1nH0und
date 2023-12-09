@@ -56,7 +56,7 @@ def reverse_whois(query, api_key, headers,exact_match):
     # Check remaining credits before making the API call
     if not check_remaining_credits(api_key, headers):
         print("Error: Insufficient credits remaining.")
-        return None
+        sys.exit(1)
     
     url = 'https://reverse-whois.whoisxmlapi.com/api/v2'
     data = {
