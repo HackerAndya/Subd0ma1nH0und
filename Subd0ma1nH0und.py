@@ -110,7 +110,7 @@ def process_query(query, output_file=None, result=None):
         # Write to the output file if specified
         if output_file:
             with open(output_file, 'a') as out_file:
-                out_file.write('\n'.join(common_names) + '\n\n')
+                out_file.write('\n'.join(common_names)+'\n')
 
     except KeyboardInterrupt:
         print("\nExecution terminated or interrupted.")
@@ -118,7 +118,7 @@ def process_query(query, output_file=None, result=None):
         print(f"Error processing query '{query}': {e}")
         print("\n" + "="*50 + "\n")
 
-def process_reverse_whois(query, api_key, headers,exact_match):
+def process_reverse_whois(query, api_key, headers,exact_match,output_file=None):
     try:
         result = reverse_whois(query, api_key, headers,exact_match)
 
@@ -133,6 +133,11 @@ def process_reverse_whois(query, api_key, headers,exact_match):
         domains_list = result.get('domainsList', [])
         for domain in domains_list:
             print(domain)
+
+        # Write to the output file if specified
+        if output_file:
+            with open(output_file, 'a') as out_file:
+                out_file.write('\n'.join(domains_list))  
 
     except Exception as e:
         print(f"Error processing reverse-whois for query '{query}': {e}")
@@ -180,7 +185,12 @@ def main():
 
     if args.mode in ('2','all') and args.api_key:
         # Perform reverse-whois lookup
-        process_reverse_whois(args.query, args.api_key, headers,args.exact_match)
+        with ThreadPoolExecutor(max_workers=args.threads) as executor:
+            for query in map(str.strip, queries):
+                # Store the result of reverse-whois in a variable named result
+                result = reverse_whois(query, args.api_key, headers, args.exact_match)
+                executor.submit(process_reverse_whois, query, args.api_key, headers, args.exact_match, args.output)
+                time.sleep(args.delay)  # Introduce a delay between requests
 
 if __name__ == "__main__":
     main()
