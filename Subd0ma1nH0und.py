@@ -56,7 +56,7 @@ def reverse_whois(query, api_key, headers,exact_match):
     # Check remaining credits before making the API call
     if not check_remaining_credits(api_key, headers):
         print("Error: Insufficient credits remaining.")
-        sys.exit(1)
+        
     
     url = 'https://reverse-whois.whoisxmlapi.com/api/v2'
     data = {
@@ -95,7 +95,7 @@ def reverse_whois(query, api_key, headers,exact_match):
 def get_common_names(result):
     return [entry.get('common_name', '') for entry in result]
 
-def process_query(query, output_file=None, result=None):
+def process_query(query, output_data=None, result=None):
     try:
         # Check if the result is empty or doesn't contain the expected data
         if not result or not isinstance(result, list):
@@ -107,10 +107,11 @@ def process_query(query, output_file=None, result=None):
         for common_name in common_names:
             print(common_name)
 
-        # Write to the output file if specified
-        if output_file:
-            with open(output_file, 'a') as out_file:
-                out_file.write('\n'.join(common_names)+'\n')
+        # If the query already exists in output_data, append the new data
+        if query in output_data:
+            output_data[query].extend(common_names)
+        else:
+            output_data[query] = common_names
 
     except KeyboardInterrupt:
         print("\nExecution terminated or interrupted.")
@@ -118,7 +119,7 @@ def process_query(query, output_file=None, result=None):
         print(f"Error processing query '{query}': {e}")
         print("\n" + "="*50 + "\n")
 
-def process_reverse_whois(query, api_key, headers,exact_match,output_file=None):
+def process_reverse_whois(query, api_key, headers,exact_match,output_data=None):
     try:
         result = reverse_whois(query, api_key, headers,exact_match)
 
@@ -134,10 +135,11 @@ def process_reverse_whois(query, api_key, headers,exact_match,output_file=None):
         for domain in domains_list:
             print(domain)
 
-        # Write to the output file if specified
-        if output_file:
-            with open(output_file, 'a') as out_file:
-                out_file.write('\n'.join(domains_list))  
+        # If the query already exists in output_data, append the new data
+        if query in output_data:
+            output_data[query].extend(domains_list)
+        else:
+            output_data[query] = domains_list
 
     except Exception as e:
         print(f"Error processing reverse-whois for query '{query}': {e}")
@@ -173,24 +175,32 @@ def main():
     else:
         parser.print_help()
         sys.exit()
+    
+    # Create a dictionary to store the output data for all queries
+    output_data = {}
 
     if args.mode in ('1','all'):
         # Perform crt.sh lookup
         with ThreadPoolExecutor(max_workers=args.threads) as executor:
             for query in map(str.strip, queries):
                 # Store the result of search_query_on_crtsh in a variable named result
-                result = search_query_on_crtsh(query, headers)
-                executor.submit(process_query, query, args.output, result)
+                # result = search_query_on_crtsh(query, headers)
+                executor.submit(process_query, query, output_data, search_query_on_crtsh(query, headers))
                 time.sleep(args.delay)  # Introduce a delay between requests
 
     if args.mode in ('2','all') and args.api_key:
         # Perform reverse-whois lookup
         with ThreadPoolExecutor(max_workers=args.threads) as executor:
             for query in map(str.strip, queries):
-                # Store the result of reverse-whois in a variable named result
-                result = reverse_whois(query, args.api_key, headers, args.exact_match)
-                executor.submit(process_reverse_whois, query, args.api_key, headers, args.exact_match, args.output)
+                # Store the result of reverse-whoisS in a variable named result
+                # result = reverse_whois(query, args.api_key, headers, args.exact_match)
+                executor.submit(process_reverse_whois, query, args.api_key, headers, args.exact_match, output_data)
                 time.sleep(args.delay)  # Introduce a delay between requests
+
+    # Write the entire output_data to the output JSON file
+    if args.output:
+        with open(args.output, 'w') as out_file:
+            json.dump(output_data, out_file, indent=2)
 
 if __name__ == "__main__":
     main()
