@@ -86,7 +86,8 @@ cat inputFile | python Subd0ma1nH0und.py -m 2 -k your_api_key -e
 |`-e, --exact-match`|Perform an exact match for provided term.|True|
 
 ## Note
-If your intention is to exclusively utilize it for crt.sh i.t `m 1` or `--mode 1` flag, consider passing not only organization names but also domain names like `domain.com`, `%.domain.com`, `%.%.domain.com` and so on.
+1. If your intention is to exclusively utilize it for crt.sh i.t `m 1` or `--mode 1` flag, consider passing not only organization names but also domain names like `domain.com`, `%.domain.com`, `%.%.domain.com` and so on.
+2. Use flag -e only with -m 2 or -m all. Use it carefully as garbage data might come.
 
 ## Upcoming
 - Reverse whois by `RegistrantContact.Email`
