@@ -8,7 +8,7 @@ from concurrent.futures import ThreadPoolExecutor
 import json
 
 def search_query_on_crtsh(query, headers):
-    url = f'https://crt.sh/?q={query}&output=json'
+    url = f'https://crt.sh/?q={query}&output=json&exclude=expired&deduplicate=N'
     result = None  # Initialize result to None
     try:
         response = requests.get(url, headers=headers)
