@@ -7,6 +7,34 @@ import time
 from concurrent.futures import ThreadPoolExecutor
 import json
 
+
+def get_common_names(result):
+    return [entry.get('common_name', '') for entry in result]
+
+def process_query(query, output_data=None, result=None):
+    try:
+        # Check if the result is empty or doesn't contain the expected data
+        if not result or not isinstance(result, list):
+            return
+
+        common_names = get_common_names(result)
+
+        # Print each common name on a separate line
+        for common_name in common_names:
+            print(common_name)
+
+        # If the query already exists in output_data, append the new data
+        if query in output_data:
+            output_data[query].extend(common_names)
+        else:
+            output_data[query] = common_names
+
+    except KeyboardInterrupt:
+        print("\nExecution terminated or interrupted.")
+    except Exception as e:
+        print(f"Error processing query '{query}': {e}")
+        print("\n" + "="*50 + "\n")
+
 def search_query_on_crtsh(query, headers):
     url = f'https://crt.sh/?q={query}&output=json&exclude=expired&deduplicate=N'
     result = None  # Initialize result to None
@@ -91,33 +119,6 @@ def reverse_whois(query, api_key, headers,exact_match):
         print(f"Error making request for query '{query}': {e}")
 
     return result
-
-def get_common_names(result):
-    return [entry.get('common_name', '') for entry in result]
-
-def process_query(query, output_data=None, result=None):
-    try:
-        # Check if the result is empty or doesn't contain the expected data
-        if not result or not isinstance(result, list):
-            return
-
-        common_names = get_common_names(result)
-
-        # Print each common name on a separate line
-        for common_name in common_names:
-            print(common_name)
-
-        # If the query already exists in output_data, append the new data
-        if query in output_data:
-            output_data[query].extend(common_names)
-        else:
-            output_data[query] = common_names
-
-    except KeyboardInterrupt:
-        print("\nExecution terminated or interrupted.")
-    except Exception as e:
-        print(f"Error processing query '{query}': {e}")
-        print("\n" + "="*50 + "\n")
 
 def process_reverse_whois(query, api_key, headers,exact_match,output_data=None):
     try:
