@@ -7,6 +7,10 @@ import time
 from concurrent.futures import ThreadPoolExecutor
 import json
 
+def fetch_and_process_crtsh(query, headers, output_data, delay):
+    time.sleep(delay)  # Delay is applied *inside* each thread
+    result = search_query_on_crtsh(query, headers)
+    process_query(query, output_data, result)
 
 def get_common_names(result):
     return [entry.get('common_name', '') for entry in result]
@@ -59,6 +63,10 @@ def search_query_on_crtsh(query, headers):
 
     return result
 
+def fetch_and_process_reverse_whois(query, api_key, headers, exact_match, output_data, delay):
+    time.sleep(delay)  # Delay is applied *inside* each thread
+    process_reverse_whois(query, api_key, headers, exact_match, output_data)
+
 def check_remaining_credits(api_key, headers):
     url = 'https://user.whoisxmlapi.com/user-service/account-balance?productId=14&apiKey='+api_key
     try:
@@ -83,7 +91,7 @@ def reverse_whois(query, api_key, headers,exact_match):
     
     # Check remaining credits before making the API call
     if not check_remaining_credits(api_key, headers):
-        print("Error: Insufficient credits remaining.")
+        return {"code":403,"messages":"Access restricted. Check the DRS credits balance or enter the correct API key."}
         
     
     url = 'https://reverse-whois.whoisxmlapi.com/api/v2'
@@ -168,8 +176,12 @@ def main():
     if args.query:
         queries = [args.query]
     elif args.query_file:
-        with open(args.query_file, 'r') as file:
-            queries = file.readlines()
+        try:
+            with open(args.query_file, 'r') as file:
+                queries = file.readlines()
+        except Exception as e:
+            print(f"Error: Unable to read file '{args.query_file}': {e}")
+            sys.exit(1)
     elif not sys.stdin.isatty():
         # Read from stdin
         queries = sys.stdin.readlines()
@@ -184,19 +196,15 @@ def main():
         # Perform crt.sh lookup
         with ThreadPoolExecutor(max_workers=args.threads) as executor:
             for query in map(str.strip, queries):
-                # Store the result of search_query_on_crtsh in a variable named result
-                # result = search_query_on_crtsh(query, headers)
-                executor.submit(process_query, query, output_data, search_query_on_crtsh(query, headers))
-                time.sleep(args.delay)  # Introduce a delay between requests
+                # Submit the crt.sh lookup and processing task to be executed concurrently
+                executor.submit(fetch_and_process_crtsh, query, headers, output_data,args.delay)
 
     if args.mode in ('2','all') and args.api_key:
         # Perform reverse-whois lookup
         with ThreadPoolExecutor(max_workers=args.threads) as executor:
             for query in map(str.strip, queries):
-                # Store the result of reverse-whoisS in a variable named result
-                # result = reverse_whois(query, args.api_key, headers, args.exact_match)
-                executor.submit(process_reverse_whois, query, args.api_key, headers, args.exact_match, output_data)
-                time.sleep(args.delay)  # Introduce a delay between requests
+                # Submit the reverse-whois lookup and processing task to be executed concurrently
+                executor.submit(fetch_and_process_reverse_whois, query, args.api_key, headers, args.exact_match, output_data, args.delay)
 
     # Write the entire output_data to the output JSON file
     if args.output:
