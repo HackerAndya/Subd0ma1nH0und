@@ -7,6 +7,10 @@ import time
 from concurrent.futures import ThreadPoolExecutor
 import json
 
+def batch_queries(queries, batch_size=10):
+    for i in range(0, len(queries), batch_size):
+        yield ' OR '.join(q.strip() for q in queries[i:i + batch_size] if q.strip())
+
 def fetch_and_process_crtsh(query, headers, output_data, delay):
     time.sleep(delay)  # Delay is applied *inside* each thread
     result = search_query_on_crtsh(query, headers)
@@ -28,10 +32,11 @@ def process_query(query, output_data=None, result=None):
             print(common_name)
 
         # If the query already exists in output_data, append the new data
-        if query in output_data:
-            output_data[query].extend(common_names)
-        else:
-            output_data[query] = common_names
+        if output_data is not None:
+            if query in output_data:
+                output_data[query].extend(common_names)
+            else:
+                output_data[query] = common_names
 
     except KeyboardInterrupt:
         print("\nExecution terminated or interrupted.")
@@ -145,10 +150,11 @@ def process_reverse_whois(query, api_key, headers,exact_match,output_data=None):
             print(domain)
 
         # If the query already exists in output_data, append the new data
-        if query in output_data:
-            output_data[query].extend(domains_list)
-        else:
-            output_data[query] = domains_list
+        if output_data is not None:
+            if query in output_data:
+                output_data[query].extend(domains_list)
+            else:
+                output_data[query] = domains_list
 
     except Exception as e:
         print(f"Error processing reverse-whois for query '{query}': {e}")
@@ -190,12 +196,12 @@ def main():
         sys.exit()
     
     # Create a dictionary to store the output data for all queries
-    output_data = {}
+    output_data = {} if args.output else None
 
     if args.mode in ('1','all'):
         # Perform crt.sh lookup
         with ThreadPoolExecutor(max_workers=args.threads) as executor:
-            for query in map(str.strip, queries):
+            for query in batch_queries(queries, batch_size=10):
                 # Submit the crt.sh lookup and processing task to be executed concurrently
                 executor.submit(fetch_and_process_crtsh, query, headers, output_data,args.delay)
 
@@ -208,8 +214,12 @@ def main():
 
     # Write the entire output_data to the output JSON file
     if args.output:
-        with open(args.output, 'w') as out_file:
-            json.dump(output_data, out_file, indent=2)
+        try:
+            with open(args.output, 'w') as out_file:
+                json.dump(output_data, out_file, indent=2)
+        except Exception as e:
+            print(f"Error: Unable to write to output file '{args.output}': {e}")
+            sys.exit(1)
 
 if __name__ == "__main__":
     main()
