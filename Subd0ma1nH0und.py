@@ -6,6 +6,10 @@ import argparse
 import time
 from concurrent.futures import ThreadPoolExecutor
 import json
+from threading import Lock
+
+failed_requests = []
+failed_lock = Lock()
 
 def batch_queries(queries, batch_size=10):
     for i in range(0, len(queries), batch_size):
@@ -58,9 +62,22 @@ def search_query_on_crtsh(query, headers):
             except json.JSONDecodeError as e:
                 # Handle JSON decoding errors
                 print(f"Error decoding JSON for query '{query}': {e}")
+                with failed_lock:
+                    failed_requests.append({
+                        "type": "crtsh",
+                        "query": query,
+                        "url": url,
+                        "headers": headers
+                    })
         else:
             # Handle non-successful HTTP status codes
             print(f"HTTP request failed for query '{query}' with status code {response.status_code}")
+            failed_requests.append({
+                        "type": "crtsh",
+                        "query": query,
+                        "url": url,
+                        "headers": headers
+                    })
 
     except requests.RequestException as e:
         # Handle other request-related exceptions
@@ -123,9 +140,29 @@ def reverse_whois(query, api_key, headers,exact_match):
             except json.JSONDecodeError as e:
                 # Handle JSON decoding errors
                 print(f"Error decoding JSON for query '{query}': {e}")
+                with failed_lock:
+                    failed_requests.append({
+                        "type": "reverse",
+                        "query": query,
+                        "url": url,
+                        "headers": headers,
+                        "data": data,
+                        "api_key": api_key,
+                        "exact_match": exact_match
+                    })
         else:
             # Handle non-successful HTTP status codes
             print(f"HTTP request failed for query '{query}' with status code {response.status_code}")
+            with failed_lock:
+                failed_requests.append({
+                    "type": "reverse",
+                    "query": query,
+                    "url": url,
+                    "headers": headers,
+                    "data": data,
+                    "api_key": api_key,
+                    "exact_match": exact_match
+                })
 
     except requests.RequestException as e:
         # Handle other request-related exceptions
@@ -159,6 +196,19 @@ def process_reverse_whois(query, api_key, headers,exact_match,output_data=None):
     except Exception as e:
         print(f"Error processing reverse-whois for query '{query}': {e}")
 
+def retry_failed_requests(output_data, delay):
+    print(f"\nRetrying {len(failed_requests)} failed requests after 5 sec delay...\n")
+    time.sleep(5)
+
+    with ThreadPoolExecutor(max_workers=5) as executor:
+        for item in failed_requests:
+            if item['type'] == 'crtsh':
+                executor.submit(fetch_and_process_crtsh, item['query'], item['headers'], output_data, delay)
+            elif item['type'] == 'reverse':
+                executor.submit(fetch_and_process_reverse_whois, item['query'], item['api_key'], item['headers'], item['exact_match'], output_data, delay)
+    
+    print(f"Retried {len(failed_requests)} failed requests after 5 sec delay...\n")        
+    
 def main():
     parser = argparse.ArgumentParser(description='Description: Search queries on crt.sh or perform reverse-whois lookup with whoisxmlapi.')
     parser.add_argument('-t', '--threads', type=int, default=1, help='Number of threads for concurrent processing.')
@@ -168,7 +218,7 @@ def main():
     parser.add_argument('-m', '--mode', choices=['1', '2','all'], default='1', help='Mode for lookup (1=crt.sh, 2=reverse-whois). all=both')
     parser.add_argument('-k', '--api-key', default='', help='API key for reverse-whois lookup.')
     parser.add_argument('-q', '--query-file', help='Path to the file containing Organization names.')
-    parser.add_argument('-e', '--exact-match', default=True, action='store_false', help='Perform an exact match. Default is True.')
+    parser.add_argument('-e', '--exact-match', default=True, action='store_false', help='Disable exact match. By default, exact match is enabled.')
     parser.add_argument('query', nargs='?', default=None, help='Query for crt.sh or reverse-whois lookup. i.e oranization name.')
     args = parser.parse_args()
 
@@ -211,6 +261,9 @@ def main():
             for query in map(str.strip, queries):
                 # Submit the reverse-whois lookup and processing task to be executed concurrently
                 executor.submit(fetch_and_process_reverse_whois, query, args.api_key, headers, args.exact_match, output_data, args.delay)
+
+    if failed_requests:
+        retry_failed_requests(output_data, args.delay)
 
     # Write the entire output_data to the output JSON file
     if args.output:
