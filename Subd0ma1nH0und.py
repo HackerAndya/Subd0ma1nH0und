@@ -230,17 +230,17 @@ def main():
             sys.exit(1)
             
     if args.query:
-        queries = [args.query]
+        queries = [args.query.strip()] if args.query.strip() else []
     elif args.query_file:
         try:
             with open(args.query_file, 'r') as file:
-                queries = file.readlines()
+                queries = [q.strip() for q in file.readlines() if q.strip()]
         except Exception as e:
             print(f"Error: Unable to read file '{args.query_file}': {e}")
             sys.exit(1)
     elif not sys.stdin.isatty():
         # Read from stdin
-        queries = sys.stdin.readlines()
+        queries = [q.strip() for q in sys.stdin.readlines() if q.strip()]
     else:
         parser.print_help()
         sys.exit()
