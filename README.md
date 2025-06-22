@@ -1,77 +1,44 @@
+# Subd0ma1nH0und 🐾
 
-# Subd0ma1nH0und
+Subd0ma1nH0und is a tool designed to enumerate subdomains and domain names associated with an organization using public certificate transparency logs (`crt.sh`) and reverse WHOIS lookups via the WhoisXML API.
 
-## Overview
+---
+## 🚀 Features
 
-SubdomainHound is a powerful tool designed to hunt and discover subdomains associated with specified organizations. Leveraging the [crt.sh](https://crt.sh) and [whoisxmlapi](https://www.whoisxmlapi.com) websites/API, this tool enables concurrent searches, providing efficient and detailed results. Uncover hidden subdomains and elevate the depth of your reconnaissance activities in Red Teaming, Penetration Testing, and Bug Bounty hunting with SubdomainHound.
-
-## Features
-
--   **crt.sh Lookup**: Search for queries on [crt.sh](https://crt.sh/) and retrieve information in JSON format.
--   **Reverse-Whois Lookup**: Perform a reverse-whois lookup using the [whoisxmlapi](https://www.whoisxmlapi.com) API by providing an organization name.
-- **Concurrent Processing:** Utilizes multiple threads to perform concurrent queries, improving efficiency.
-- **Delay Between Requests:** Introduces a customizable delay between requests to avoid rate-limiting issues.
-- **Output to File:** Optionally saves the results to a specified output file for further analysis.
-- **User-Agent Customization**: Specify a custom User-Agent string for HTTP requests.
-
-## Requirements
-```
-Python 3.X
-pip install requests
-```
-
-## Installation
-
-```
-git clone https://github.com/HackerAndya/Subd0ma1nH0und.git
-cd Subd0ma1nH0und
-python Subd0ma1nH0und.py
-```
-
-## Usage
-
-Show the help message and exit:
-```
-python Subd0ma1nH0und.py -h
-```
-Run the script without any arguments:
+##### 🔍 Organization to Domain/Subdomain Enumeration
 ```bash
-python Subd0ma1nH0und.py
+Supports searching domains and subdomains associated with organizations using:
+1. crt.sh (Certificate Transparency logs)
+2. WhoisXML Reverse Whois API
 ```
-Specify no. of threads, delay between request, output file, and input file path:
+##### 🧠 Smart Query Modes
+```bash
+Choose from:
+Mode 1 → Only crt.sh
+Mode 2 → Only WhoisXML
+Mode all → Both sources combined
 ```
-python Subd0ma1nH0und.py -t <num_threads> -d <delay_seconds> -o <output_file> -q <input_file_path>
+##### 🧵 Multithreaded Lookups
+```bash
+Speeds up processing with support for concurrent queries via threads
 ```
-Pipe an organization name to the script:
+##### 🕐 Customizable Request Delay
+```bash
+Control request rate to avoid rate-limiting (-d flag)
 ```
-echo "<Org Name>" | python Subd0ma1nH0und.py
+##### 🛡️ Custom User-Agent Support
+```bash
+Spoof user agents using the -u flag
 ```
-Input organization name directly:
+##### 🧾 Batch Input Support for crt.sh
+```bash
+Batching of input queries for crt.sh to reduce rate limiting and improve efficiency
 ```
-python Subd0ma1nH0und.py "<Org Name>"
+##### 🔁 Automatic Retry of Failed Requests
+```bash
+Failed queries due to network or rate-limit errors are retried at the end using multithreading.
 ```
-Pipe a list of organization names from a file to the script:
-```
-cat inputFile | python Subd0ma1nH0und.py
-```
-Specify a custom User-Agent string:
-```
-cat inputFile | python Subd0ma1nH0und.py -u "My Custom User-Agent"
-```
-Perform a reverse-whois lookup with an API key:
-```
-cat inputFile | python Subd0ma1nH0und.py -m 2 -k your_api_key
-```
-Perform both crt.sh and reverse-whois lookups:
-```
-cat inputFile | python Subd0ma1nH0und.py -m all -k your_api_key
-```
-Perform an exact match in reverse-whois lookup:
-```
-cat inputFile | python Subd0ma1nH0und.py -m 2 -k your_api_key -e
-```
-
-
+---
 ## Options
 | Flags              | Description | Defaults |
 | :---------------- | :------ | :----: |
@@ -83,14 +50,114 @@ cat inputFile | python Subd0ma1nH0und.py -m 2 -k your_api_key -e
 |`-m, --mode`|Mode for lookup (1=crt.sh, 2=reverse-whois). all=both|1|
 |`-k, --api-key`|API key for reverse-whois lookup.|-|
 | `-q, --query-file` |  Path to the file containing organization names| - |
-|`-e, --exact-match`|Perform an exact match for provided term.|True|
+|`-e, --exact-match`|Disable exact match.|True|
+---
 
-## Note
-1. If your intention is to exclusively utilize it for crt.sh i.t `m 1` or `--mode 1` flag, consider passing not only organization names but also domain names like `domain.com`, `%.domain.com`, `%.%.domain.com` and so on.
-2. Use flag -e only with -m 2 or -m all. Use it carefully as garbage data might come.
+## 🆘 Help Menu
 
-## Upcoming
-- Reverse whois by `RegistrantContact.Email`
+```bash
+python Subd0ma1nH0und.py
+python Subd0ma1nH0und.py -h
+```
 
-## Contributing
-Feel free to contribute to this project. If you find issues or have suggestions, please open an issue or submit a pull request.
+---
+
+## 🔍 Querying Domains Using Organization Name
+
+### Mode 1 (Default): `crt.sh` Provider Only
+
+```bash
+python Subd0ma1nH0und.py "Tesla Inc"
+echo "Tesla Inc" | python Subd0ma1nH0und.py
+cat subsidiaries.txt | python Subd0ma1nH0und.py
+python Subd0ma1nH0und.py -q ../subsidiaries.txt
+```
+
+---
+
+### Mode 2: WhoisXML Reverse-WHOIS Lookup
+
+```bash
+python Subd0ma1nH0und.py "Tesla Inc" -m 2 -k <api_key>
+echo "Tesla Inc" | python Subd0ma1nH0und.py -m 2 -k <api_key>
+cat subsidiaries.txt | python Subd0ma1nH0und.py -m 2 -k <api_key>
+python Subd0ma1nH0und.py -q ../subsidiaries.txt -m 2 -k <api_key>
+```
+
+#### Disable Exact Match (default is exact match = true)
+
+```bash
+python Subd0ma1nH0und.py -q ../subsidiaries.txt -m 2 -k <api_key> -e
+```
+
+---
+
+### Mode `all`: Use Both crt.sh & WhoisXML
+
+```bash
+python Subd0ma1nH0und.py "Tesla Inc" -m all -k <api_key>
+echo "Tesla Inc" | python Subd0ma1nH0und.py -m all -k <api_key>
+cat subsidiaries.txt | python Subd0ma1nH0und.py -m all -k <api_key>
+python Subd0ma1nH0und.py -q ../subsidiaries.txt -m all -k <api_key>
+```
+
+---
+
+## 🧩 Additional Options
+
+### Custom User-Agent
+
+```bash
+python Subd0ma1nH0und.py -q ../subsidiaries.txt -u "Opera/9.80 (Windows NT 5.2; U; ru) Presto/2.6.30 Version/10.61"
+```
+
+### Delay Between Requests (in seconds)
+
+```bash
+python Subd0ma1nH0und.py -q ../subsidiaries.txt -m all -k <api_key> -d 2
+```
+
+### Store Output in JSON File
+
+```bash
+python Subd0ma1nH0und.py -q ../subsidiaries.txt -m all -k <api_key> -d 2 -o output.json
+```
+
+---
+
+## 🧾 Output JSON Format
+
+```json
+{
+  "Tesla Inc": [
+    "sub.tesla.com",
+    "login.teslamotors.com",
+    "energy.tesla.com"
+  ],
+  "SpaceX": [
+    "launch.spacex.com",
+    "shop.spacex.com"
+  ]
+}
+```
+
+---
+
+## 📌 Notes
+
+- `-e` flag disables exact match for reverse-WHOIS search (used with `-m 2` or `-m all`). ⚠️ Be cautious: Using this can return a lot of garbage/noisy data if not filtered properly.
+- `-k` is required for any mode using WhoisXML API (2 or all).
+- Supports input from direct query, stdin, or file.
+- Multithreaded with customizable thread count and delay between requests.
+- If your intention is to exclusively utilize it for crt.sh (i.e. -m 1 or --mode 1), consider passing not only organization names but also domain patterns like:
+    * domain.com
+    * %.domain.com
+    * %.%.domain.com etc.
+
+- This increases the chances of discovering subdomains via certificate transparency logs.
+
+---
+
+## 💬 Contribution
+
+PRs and issues are welcome.
