@@ -3,6 +3,12 @@
 Subd0ma1nH0und is a tool designed to enumerate subdomains and domain names associated with an organization using public certificate transparency logs (`crt.sh`) and reverse WHOIS lookups via the WhoisXML API.
 
 ---
+## Requirements
+```
+Python 3.X
+pip install requests
+```
+---
 ## 🚀 Features
 
 ##### 🔍 Organization to Domain/Subdomain Enumeration
