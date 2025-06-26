@@ -7,6 +7,7 @@ import time
 from concurrent.futures import ThreadPoolExecutor
 import json
 from threading import Lock
+from collections import defaultdict
 
 failed_requests = []
 failed_lock = Lock()
@@ -15,21 +16,21 @@ def batch_queries(queries, batch_size=10):
     for i in range(0, len(queries), batch_size):
         yield ' OR '.join(q.strip() for q in queries[i:i + batch_size] if q.strip())
 
-def fetch_and_process_crtsh(query, headers, output_data, delay):
+def fetch_and_process_crtsh(query, headers, output_data, delay, silent):
     time.sleep(delay)  # Delay is applied *inside* each thread
-    result = search_query_on_crtsh(query, headers)
-    process_query(query, output_data, result)
+    result = search_query_on_crtsh(query, headers, silent)
+    process_query(query, output_data, result, silent)
 
 def get_common_names(result):
-    return [entry.get('common_name', '') for entry in result]
+    return [entry.get('common_name', '').replace('*.', '', 1) for entry in result]
 
-def process_query(query, output_data=None, result=None):
+def process_query(query, output_data=None, result=None, silent=False):
     try:
         # Check if the result is empty or doesn't contain the expected data
         if not result or not isinstance(result, list):
             return
 
-        common_names = get_common_names(result)
+        common_names = list(set(get_common_names(result)))
 
         # Print each common name on a separate line
         for common_name in common_names:
@@ -43,12 +44,14 @@ def process_query(query, output_data=None, result=None):
                 output_data[query] = common_names
 
     except KeyboardInterrupt:
-        print("\nExecution terminated or interrupted.")
+        if not silent:
+            print("\nExecution terminated or interrupted.")
     except Exception as e:
-        print(f"Error processing query '{query}': {e}")
-        print("\n" + "="*50 + "\n")
+        if not silent:
+            print(f"Error processing query '{query}': {e}")
+            print("\n" + "="*50 + "\n")
 
-def search_query_on_crtsh(query, headers):
+def search_query_on_crtsh(query, headers, silent):
     url = f'https://crt.sh/?q={query}&output=json&exclude=expired&deduplicate=N'
     result = None  # Initialize result to None
     try:
@@ -61,7 +64,8 @@ def search_query_on_crtsh(query, headers):
                 result = response.json()
             except json.JSONDecodeError as e:
                 # Handle JSON decoding errors
-                print(f"Error decoding JSON for query '{query}': {e}")
+                if not silent:
+                    print(f"Error decoding JSON for query '{query}': {e}")
                 with failed_lock:
                     failed_requests.append({
                         "type": "crtsh",
@@ -71,7 +75,8 @@ def search_query_on_crtsh(query, headers):
                     })
         else:
             # Handle non-successful HTTP status codes
-            print(f"HTTP request failed for query '{query}' with status code {response.status_code}")
+            if not silent:
+                print(f"HTTP request failed for query '{query}' with status code {response.status_code}\n")
             failed_requests.append({
                         "type": "crtsh",
                         "query": query,
@@ -81,13 +86,20 @@ def search_query_on_crtsh(query, headers):
 
     except requests.RequestException as e:
         # Handle other request-related exceptions
-        print(f"Error making request for query '{query}': {e}")
+        if not silent:
+            print(f"Error making request for query '{query}': {e}")
+        failed_requests.append({
+                        "type": "crtsh",
+                        "query": query,
+                        "url": url,
+                        "headers": headers
+                    })
 
     return result
 
-def fetch_and_process_reverse_whois(query, api_key, headers, exact_match, output_data, delay):
+def fetch_and_process_reverse_whois(query, api_key, headers, exact_match, output_data, delay, silent):
     time.sleep(delay)  # Delay is applied *inside* each thread
-    process_reverse_whois(query, api_key, headers, exact_match, output_data)
+    process_reverse_whois(query, api_key, headers, exact_match, output_data, silent)
 
 def check_remaining_credits(api_key, headers):
     url = 'https://user.whoisxmlapi.com/user-service/account-balance?productId=14&apiKey='+api_key
@@ -100,16 +112,20 @@ def check_remaining_credits(api_key, headers):
                 remaining_credits = balance_data[0].get('credits', 0)
                 return remaining_credits > 1
             else:
-                print("Error: Unable to retrieve account balance data.")
+                if not silent:
+                    print("Error: Unable to retrieve account balance data.")
         else:
-            print(f"Error checking account balance. HTTP Status Code: {response.status_code}")
+            if not silent:
+                print(f"Error checking account balance. HTTP Status Code: {response.status_code}")
 
     except requests.RequestException as e:
-        print(f"Error checking account balance: {e}")
+        if not silent:
+            print(f"Error checking account balance: {e}")
+        
 
     return False
 
-def reverse_whois(query, api_key, headers,exact_match):
+def reverse_whois(query, api_key, headers,exact_match, silent):
     
     # Check remaining credits before making the API call
     if not check_remaining_credits(api_key, headers):
@@ -139,7 +155,8 @@ def reverse_whois(query, api_key, headers,exact_match):
                 result = response.json()
             except json.JSONDecodeError as e:
                 # Handle JSON decoding errors
-                print(f"Error decoding JSON for query '{query}': {e}")
+                if not silent:
+                    print(f"Error decoding JSON for query '{query}': {e}")
                 with failed_lock:
                     failed_requests.append({
                         "type": "reverse",
@@ -152,7 +169,8 @@ def reverse_whois(query, api_key, headers,exact_match):
                     })
         else:
             # Handle non-successful HTTP status codes
-            print(f"HTTP request failed for query '{query}' with status code {response.status_code}")
+            if not silent:
+                print(f"HTTP request failed for query '{query}' with status code {response.status_code}\n")
             with failed_lock:
                 failed_requests.append({
                     "type": "reverse",
@@ -166,7 +184,14 @@ def reverse_whois(query, api_key, headers,exact_match):
 
     except requests.RequestException as e:
         # Handle other request-related exceptions
-        print(f"Error making request for query '{query}': {e}")
+        if not silent:
+            print(f"Error making request for query '{query}': {e}")
+        failed_requests.append({
+                        "type": "crtsh",
+                        "query": query,
+                        "url": url,
+                        "headers": headers
+                    })
 
     return result
 
@@ -179,7 +204,8 @@ def process_reverse_whois(query, api_key, headers,exact_match,output_data=None):
         error_code = result.get('code', None)
         
         if error_message and error_code is not None and error_code // 100 != 2:
-            print(f"Error in reverse-whois lookup for query '{query}': {error_message} (HTTP Status Code: {error_code})")
+            if not silent:
+                print(f"Error in reverse-whois lookup for query '{query}': {error_message} (HTTP Status Code: {error_code})")
             return
 
         domains_list = result.get('domainsList', [])
@@ -194,20 +220,54 @@ def process_reverse_whois(query, api_key, headers,exact_match,output_data=None):
                 output_data[query] = domains_list
 
     except Exception as e:
-        print(f"Error processing reverse-whois for query '{query}': {e}")
+        if not silent:
+            print(f"Error processing reverse-whois for query '{query}': {e}")
 
-def retry_failed_requests(output_data, delay):
-    print(f"\nRetrying {len(failed_requests)} failed requests after 5 sec delay...\n")
-    time.sleep(5)
+MAX_RETRIES = 3
+retry_counts = defaultdict(int)
 
-    with ThreadPoolExecutor(max_workers=5) as executor:
-        for item in failed_requests:
-            if item['type'] == 'crtsh':
-                executor.submit(fetch_and_process_crtsh, item['query'], item['headers'], output_data, delay)
-            elif item['type'] == 'reverse':
-                executor.submit(fetch_and_process_reverse_whois, item['query'], item['api_key'], item['headers'], item['exact_match'], output_data, delay)
-    
-    print(f"Retried {len(failed_requests)} failed requests after 5 sec delay...\n")        
+def retry_failed_requests(output_data, delay, silent):
+    global failed_requests
+
+    for attempt in range(1, MAX_RETRIES + 1):
+        if not failed_requests:
+            break
+
+        if not silent:
+            print(f"\n[Retry Attempt #{attempt}] Retrying {len(failed_requests)} failed requests after 5 sec delay...\n")
+        time.sleep(5)
+
+        new_failed_requests = []
+
+        with ThreadPoolExecutor(max_workers=5) as executor:
+            for item in failed_requests:
+                query = item['query']
+
+                if retry_counts[query] >= MAX_RETRIES:
+                    continue  # Skip retrying if already hit max retries
+
+                retry_counts[query] += 1
+
+                if item['type'] == 'crtsh':
+                    future = executor.submit(fetch_and_process_crtsh, query, item['headers'], output_data, delay)
+                elif item['type'] == 'reverse':
+                    future = executor.submit(fetch_and_process_reverse_whois, query, item['api_key'], item['headers'], item['exact_match'], output_data, delay)
+
+                # Track future and item together
+                future.item = item
+
+            # Rebuild failed_requests with only those that fail again
+            failed_requests = []
+
+        # Now append skipped ones explicitly for user visibility
+        for item in list(retry_counts):
+            if retry_counts[item] >= MAX_RETRIES:
+                if not silent:
+                    print(f"Skipping '{item}' after {MAX_RETRIES} failed attempts.")
+
+    if not silent:
+        print("\n Retry attempts completed.\n")
+      
     
 def main():
     parser = argparse.ArgumentParser(description='Description: Search queries on crt.sh or perform reverse-whois lookup with whoisxmlapi.')
@@ -219,6 +279,7 @@ def main():
     parser.add_argument('-k', '--api-key', default='', help='API key for reverse-whois lookup.')
     parser.add_argument('-q', '--query-file', help='Path to the file containing Organization names.')
     parser.add_argument('-e', '--exact-match', default=True, action='store_false', help='Disable exact match. By default, exact match is enabled.')
+    parser.add_argument('-s', '--silent', action='store_true', help='Silent mode: only output results, suppress logs.')
     parser.add_argument('query', nargs='?', default=None, help='Query for crt.sh or reverse-whois lookup. i.e oranization name.')
     args = parser.parse_args()
 
@@ -236,7 +297,8 @@ def main():
             with open(args.query_file, 'r') as file:
                 queries = [q.strip() for q in file.readlines() if q.strip()]
         except Exception as e:
-            print(f"Error: Unable to read file '{args.query_file}': {e}")
+            if not silent:
+                print(f"Error: Unable to read file '{args.query_file}': {e}")
             sys.exit(1)
     elif not sys.stdin.isatty():
         # Read from stdin
@@ -253,17 +315,17 @@ def main():
         with ThreadPoolExecutor(max_workers=args.threads) as executor:
             for query in batch_queries(queries, batch_size=10):
                 # Submit the crt.sh lookup and processing task to be executed concurrently
-                executor.submit(fetch_and_process_crtsh, query, headers, output_data,args.delay)
+                executor.submit(fetch_and_process_crtsh, query, headers, output_data,args.delay, args.silent)
 
     if args.mode in ('2','all') and args.api_key:
         # Perform reverse-whois lookup
         with ThreadPoolExecutor(max_workers=args.threads) as executor:
             for query in map(str.strip, queries):
                 # Submit the reverse-whois lookup and processing task to be executed concurrently
-                executor.submit(fetch_and_process_reverse_whois, query, args.api_key, headers, args.exact_match, output_data, args.delay)
+                executor.submit(fetch_and_process_reverse_whois, query, args.api_key, headers, args.exact_match, output_data, args.delay, args.silent)
 
     if failed_requests:
-        retry_failed_requests(output_data, args.delay)
+        retry_failed_requests(output_data, args.delay, args.silent)
 
     # Write the entire output_data to the output JSON file
     if args.output:
@@ -271,7 +333,8 @@ def main():
             with open(args.output, 'w') as out_file:
                 json.dump(output_data, out_file, indent=2)
         except Exception as e:
-            print(f"Error: Unable to write to output file '{args.output}': {e}")
+            if not silent:
+                print(f"Error: Unable to write to output file '{args.output}': {e}")
             sys.exit(1)
 
 if __name__ == "__main__":
