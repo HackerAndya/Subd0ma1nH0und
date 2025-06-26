@@ -44,19 +44,25 @@ Batching of input queries for crt.sh to reduce rate limiting and improve efficie
 ```bash
 Failed queries due to network or rate-limit errors are retried at the end using multithreading.
 ```
+
+##### 🔇 Silent Mode
+```
+Enable silent mode using the -s or --silent flag to suppress standard output (useful when piping results to other tools or saving outputs only).
+```
 ---
 ## Options
 | Flags              | Description | Defaults |
 | :---------------- | :------ | :----: |
 |`-h, --help  ` |Show help menu   | - |
 |`-t, --threads  ` |Number of threads for concurrent processing   | 1 |
-|` -d, --delay `  |   Delay between requests in seconds	   | 1.5 |
+|` -d, --delay `  |   Delay between requests in seconds	   | 1.0 |
 |` -o, --output`  |  Output file path (optional)	   | - |
 |`-u, --user-agent`|Custom User-Agent string.|Mozilla/5.0 (Linux; Android 6.0; Nexus 5 Build/MRA58N) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/119.0.0.0 Mobile Safari/537.36|
 |`-m, --mode`|Mode for lookup (1=crt.sh, 2=reverse-whois). all=both|1|
 |`-k, --api-key`|API key for reverse-whois lookup.|-|
 | `-q, --query-file` |  Path to the file containing organization names| - |
 |`-e, --exact-match`|Disable exact match.|True|
+|`-s, --silent`|Silent mode: only output results, suppress logs.|False|
 ---
 
 ## 🆘 Help Menu
