@@ -1,6 +1,6 @@
-# Subd0ma1nH0und 🐾
+# Subdomainhound 🐾
 
-Subd0ma1nH0und is a tool designed to enumerate subdomains and domain names associated with an organization using public certificate transparency logs (`crt.sh`) and reverse WHOIS lookups via the WhoisXML API.
+Subdomainhound is a tool designed to enumerate subdomains and domain names associated with an organization using public certificate transparency logs (`crt.sh`) and reverse WHOIS lookups via the WhoisXML API.
 
 ---
 ## Requirements
@@ -68,8 +68,8 @@ Enable silent mode using the -s or --silent flag to suppress standard output (us
 ## 🆘 Help Menu
 
 ```bash
-python Subd0ma1nH0und.py
-python Subd0ma1nH0und.py -h
+python Subdomainhound.py
+python Subdomainhound.py -h
 ```
 
 ---
@@ -79,10 +79,10 @@ python Subd0ma1nH0und.py -h
 ### Mode 1 (Default): `crt.sh` Provider Only
 
 ```bash
-python Subd0ma1nH0und.py "Tesla Inc"
-echo "Tesla Inc" | python Subd0ma1nH0und.py
-cat subsidiaries.txt | python Subd0ma1nH0und.py
-python Subd0ma1nH0und.py -q ../subsidiaries.txt
+python Subdomainhound.py "Tesla Inc"
+echo "Tesla Inc" | python Subdomainhound.py
+cat subsidiaries.txt | python Subdomainhound.py
+python Subdomainhound.py -q ../subsidiaries.txt
 ```
 
 ---
@@ -90,16 +90,16 @@ python Subd0ma1nH0und.py -q ../subsidiaries.txt
 ### Mode 2: WhoisXML Reverse-WHOIS Lookup
 
 ```bash
-python Subd0ma1nH0und.py "Tesla Inc" -m 2 -k <api_key>
-echo "Tesla Inc" | python Subd0ma1nH0und.py -m 2 -k <api_key>
-cat subsidiaries.txt | python Subd0ma1nH0und.py -m 2 -k <api_key>
-python Subd0ma1nH0und.py -q ../subsidiaries.txt -m 2 -k <api_key>
+python Subdomainhound.py "Tesla Inc" -m 2 -k <api_key>
+echo "Tesla Inc" | python Subdomainhound.py -m 2 -k <api_key>
+cat subsidiaries.txt | python Subdomainhound.py -m 2 -k <api_key>
+python Subdomainhound.py -q ../subsidiaries.txt -m 2 -k <api_key>
 ```
 
 #### Disable Exact Match (default is exact match = true)
 
 ```bash
-python Subd0ma1nH0und.py -q ../subsidiaries.txt -m 2 -k <api_key> -e
+python Subdomainhound.py -q ../subsidiaries.txt -m 2 -k <api_key> -e
 ```
 
 ---
@@ -107,10 +107,10 @@ python Subd0ma1nH0und.py -q ../subsidiaries.txt -m 2 -k <api_key> -e
 ### Mode `all`: Use Both crt.sh & WhoisXML
 
 ```bash
-python Subd0ma1nH0und.py "Tesla Inc" -m all -k <api_key>
-echo "Tesla Inc" | python Subd0ma1nH0und.py -m all -k <api_key>
-cat subsidiaries.txt | python Subd0ma1nH0und.py -m all -k <api_key>
-python Subd0ma1nH0und.py -q ../subsidiaries.txt -m all -k <api_key>
+python Subdomainhound.py "Tesla Inc" -m all -k <api_key>
+echo "Tesla Inc" | python Subdomainhound.py -m all -k <api_key>
+cat subsidiaries.txt | python Subdomainhound.py -m all -k <api_key>
+python Subdomainhound.py -q ../subsidiaries.txt -m all -k <api_key>
 ```
 
 ---
@@ -120,19 +120,19 @@ python Subd0ma1nH0und.py -q ../subsidiaries.txt -m all -k <api_key>
 ### Custom User-Agent
 
 ```bash
-python Subd0ma1nH0und.py -q ../subsidiaries.txt -u "Opera/9.80 (Windows NT 5.2; U; ru) Presto/2.6.30 Version/10.61"
+python Subdomainhound.py -q ../subsidiaries.txt -u "Opera/9.80 (Windows NT 5.2; U; ru) Presto/2.6.30 Version/10.61"
 ```
 
 ### Delay Between Requests (in seconds)
 
 ```bash
-python Subd0ma1nH0und.py -q ../subsidiaries.txt -m all -k <api_key> -d 2
+python Subdomainhound.py -q ../subsidiaries.txt -m all -k <api_key> -d 2
 ```
 
 ### Store Output in JSON File
 
 ```bash
-python Subd0ma1nH0und.py -q ../subsidiaries.txt -m all -k <api_key> -d 2 -o output.json
+python Subdomainhound.py -q ../subsidiaries.txt -m all -k <api_key> -d 2 -o output.json
 ```
 
 ---
