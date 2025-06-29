@@ -8,6 +8,7 @@ from concurrent.futures import ThreadPoolExecutor
 import json
 from threading import Lock
 from collections import defaultdict
+import re
 
 failed_requests = []
 failed_lock = Lock()
@@ -22,7 +23,13 @@ def fetch_and_process_crtsh(query, headers, output_data, delay, silent):
     process_query(query, output_data, result, silent)
 
 def get_common_names(result):
-    return [entry.get('common_name', '').replace('*.', '', 1) for entry in result]
+    domain_pattern = re.compile(r'^[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$')
+    return [
+        entry.get('common_name', '').lstrip('*.')
+        for entry in result
+        if domain_pattern.match(entry.get('common_name', '').lstrip('*.')) 
+        and len(entry.get('common_name', '')) <= 253
+    ]
 
 def process_query(query, output_data=None, result=None, silent=False):
     try:
